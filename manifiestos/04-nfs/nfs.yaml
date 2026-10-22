@@ -1,0 +1,55 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nfs-pvc
+  namespace: lab-so
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: local-path
+  resources:
+    requests: {storage: 512Mi}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nfs
+  namespace: lab-so
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: nfs}
+  template:
+    metadata:
+      labels: {app: nfs}
+    spec:
+      containers:
+        - name: nfs
+          image: itsthenetwork/nfs-server-alpine:12
+          securityContext:
+            privileged: true
+          env:
+            - name: SHARED_DIRECTORY
+              value: /nfsshare
+          ports: [{containerPort: 2049, protocol: TCP}]
+          volumeMounts:
+            - name: datos
+              mountPath: /nfsshare
+          resources:
+            requests: {cpu: 50m, memory: 64Mi}
+            limits: {cpu: 500m, memory: 256Mi}
+      volumes:
+        - name: datos
+          persistentVolumeClaim: {claimName: nfs-pvc}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nfs
+  namespace: lab-so
+spec:
+  type: NodePort
+  selector: {app: nfs}
+  ports:
+    - port: 2049
+      targetPort: 2049
+      nodePort: 30049

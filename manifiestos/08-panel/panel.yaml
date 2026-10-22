@@ -1,0 +1,76 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: panel-pvc
+  namespace: lab-so
+  labels:
+    app: panel
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 512Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: panel
+  namespace: lab-so
+  labels:
+    app: panel
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: panel
+  template:
+    metadata:
+      labels:
+        app: panel
+    spec:
+      containers:
+        - name: uptime-kuma
+          image: louislam/uptime-kuma:1
+          ports:
+            - name: http
+              containerPort: 3001
+          volumeMounts:
+            - name: datos-panel
+              mountPath: /app/data
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3001
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 384Mi
+      volumes:
+        - name: datos-panel
+          persistentVolumeClaim:
+            claimName: panel-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: panel
+  namespace: lab-so
+  labels:
+    app: panel
+spec:
+  type: NodePort
+  selector:
+    app: panel
+  ports:
+    - name: http
+      port: 3001
+      targetPort: 3001
+      nodePort: 30301
+      protocol: TCP

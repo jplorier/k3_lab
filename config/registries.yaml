@@ -1,0 +1,8 @@
+mirrors:
+  "localhost:30500":
+    endpoint:
+      - "http://localhost:30500"
+configs:
+  "localhost:30500":
+    tls:
+      insecure_skip_verify: true

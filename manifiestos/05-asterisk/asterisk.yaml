@@ -1,0 +1,104 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: asterisk-config
+  namespace: lab-so
+data:
+  pjsip.conf: |
+    [transport-udp]
+    type=transport
+    protocol=udp
+    bind=0.0.0.0:5060
+    [1001](endpoint-basic)
+    auth=1001-auth
+    aors=1001
+    [1001-auth]
+    type=auth
+    auth_type=userpass
+    username=1001
+    password=utecvoip
+    [1001]
+    type=aor
+    max_contacts=1
+    [1002](endpoint-basic)
+    auth=1002-auth
+    aors=1002
+    [1002-auth]
+    type=auth
+    auth_type=userpass
+    username=1002
+    password=utecvoip
+    [1002]
+    type=aor
+    max_contacts=1
+    [1003](endpoint-basic)
+    auth=1003-auth
+    aors=1003
+    [1003-auth]
+    type=auth
+    auth_type=userpass
+    username=1003
+    password=utecvoip
+    [1003]
+    type=aor
+    max_contacts=1
+    [endpoint-basic](!)
+    type=endpoint
+    context=laboratorio-utec
+    disallow=all
+    allow=ulaw
+    direct_media=no
+    rtp_symmetric=yes
+    force_rport=yes
+    rewrite_contact=yes
+  rtp.conf: |
+    [general]
+    rtpstart=10000
+    rtpend=10020
+  extensions.conf: |
+    [laboratorio-utec]
+    exten => 1001,1,Dial(PJSIP/1001,30)
+    exten => 1002,1,Dial(PJSIP/1002,30)
+    exten => 1003,1,Dial(PJSIP/1003,30)
+    exten => 600,1,Answer()
+     same => n,Echo()
+     same => n,Hangup()
+    exten => 601,1,Answer()
+     same => n,Playback(hello-world)
+     same => n,Playback(demo-congrats)
+     same => n,Hangup()
+    exten => 602,1,Answer()
+     same => n,SayDigits(2026)
+     same => n,Hangup()
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: asterisk
+  namespace: lab-so
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: asterisk}
+  template:
+    metadata:
+      labels: {app: asterisk}
+    spec:
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+        - name: asterisk
+          image: andrius/asterisk:latest
+          ports:
+            - {containerPort: 5060, protocol: UDP}
+            - {containerPort: 5060, protocol: TCP}
+          volumeMounts:
+            - {name: config, mountPath: /etc/asterisk/pjsip.conf, subPath: pjsip.conf}
+            - {name: config, mountPath: /etc/asterisk/rtp.conf, subPath: rtp.conf}
+            - {name: config, mountPath: /etc/asterisk/extensions.conf, subPath: extensions.conf}
+          resources:
+            requests: {cpu: 100m, memory: 128Mi}
+            limits: {cpu: 1000m, memory: 512Mi}
+      volumes:
+        - name: config
+          configMap: {name: asterisk-config}
