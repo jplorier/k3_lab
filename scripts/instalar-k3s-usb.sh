@@ -60,7 +60,8 @@ fi
 if selinuxenabled 2>/dev/null; then
   restorecon -R /var/lib/rancher/k3s
 fi
-systemctl enable --now k3s
+systemctl enable k3s
+systemctl restart k3s
 
 until kubectl get nodes >/dev/null 2>&1; do sleep 2; done
 kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/standard-install.yaml
