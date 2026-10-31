@@ -333,7 +333,7 @@ curl -s http://localhost:30500/v2/utec/mi-app/tags/list""", "ACTUALIZACIÓN A LA
     d.informe("Observá la salida de " + c("docker push") + ", la respuesta JSON de " + c("http://localhost:30500/v2/utec/mi-app/tags/list") + " y recargá " + c("http://localhost/") + " para identificar los Pod que responden.")
 
     d.h3("2.4. Exponer servicios HTTP con Traefik, Ingress y Gateway API", VERDE)
-    d.p("K3s instala Traefik y ServiceLB por defecto. ServiceLB publica los puertos " + c("80") + " y " + c("443") + " del host; Traefik recibe el tráfico y lo balancea hacia Services internos. El instalador habilita el proveedor Gateway API de Traefik; K3s instala sus CRD y la clase de Gateway. El manifiesto " + c("manifiestos/09-gateway/gateway.yaml") + " declara un " + c("GatewayClass") + ", un " + c("Gateway") + " llamado " + c("entrada-web") + " y una " + c("HTTPRoute") + " hacia " + c("mi-app") + ".")
+    d.p("K3s instala Traefik y ServiceLB por defecto. ServiceLB publica los puertos " + c("80") + " y " + c("443") + " del host; Traefik recibe el tráfico y lo balancea hacia Services internos. El instalador habilita el proveedor Gateway API de Traefik; K3s instala sus CRD y la clase de Gateway. El manifiesto " + c("manifiestos/09-gateway/gateway.yaml") + " declara un " + c("Gateway") + " llamado " + c("entrada-web") + ", que usa el " + c("GatewayClass") + " " + c("traefik") + ", y una " + c("HTTPRoute") + " hacia " + c("mi-app") + ".")
     d.code("""# Aplicar o revisar el punto de entrada y la ruta HTTP
 ./scripts/encender.sh gateway
 kubectl get svc -n kube-system traefik
