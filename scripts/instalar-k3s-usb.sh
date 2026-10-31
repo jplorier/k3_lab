@@ -64,7 +64,13 @@ systemctl enable k3s
 systemctl restart k3s
 
 until kubectl get nodes >/dev/null 2>&1; do sleep 2; done
-kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/standard-install.yaml
+# K3s instala Traefik y las CRD de Gateway API con Helm; instalarlas aparte hace fallar el chart.
+echo "Esperando a Traefik..."
+timeout 600 sh -c 'until kubectl get deployment traefik -n kube-system >/dev/null 2>&1; do sleep 2; done' || {
+  echo "Traefik no se instaló. Revise: kubectl logs -n kube-system job/helm-install-traefik-crd" >&2
+  exit 1
+}
+kubectl rollout status deployment/traefik -n kube-system --timeout=300s
 
 usermod -aG docker "${SUDO_USER:-$USER}" || true
 chmod 644 /etc/rancher/k3s/k3s.yaml

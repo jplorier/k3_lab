@@ -1,11 +1,4 @@
 apiVersion: gateway.networking.k8s.io/v1
-kind: GatewayClass
-metadata:
-  name: traefik
-spec:
-  controllerName: traefik.io/gateway-controller
----
-apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
   name: entrada-web
@@ -15,7 +8,8 @@ spec:
   listeners:
     - name: http
       protocol: HTTP
-      port: 80
+      # Puerto del entryPoint web de Traefik; ServiceLB publica el 80 del host hacia él.
+      port: 8000
       allowedRoutes:
         namespaces:
           from: Same

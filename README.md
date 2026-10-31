@@ -19,8 +19,8 @@ newgrp docker
 ./scripts/estado.sh
 ```
 
-El instalador requiere conexión a Internet una vez, para instalar paquetes,
-K3s y las CRD de Gateway API. Traefik y ServiceLB quedan habilitados: el
+El instalador requiere conexión a Internet una vez, para instalar paquetes y
+K3s, que incluye las CRD de Gateway API. Traefik y ServiceLB quedan habilitados: el
 ejemplo web se publica en `http://localhost/` mediante Gateway API. Después,
 los manifiestos, imágenes descargadas y volúmenes permanecen en el USB. Los
 tamaños de PVC son solicitudes y `local-path` no reserva ese espacio por
