@@ -65,6 +65,9 @@ systemctl restart k3s
 
 until kubectl get nodes >/dev/null 2>&1; do sleep 2; done
 # K3s instala Traefik y las CRD de Gateway API con Helm; instalarlas aparte hace fallar el chart.
+# Se quitan las que haya dejado una versión anterior de este instalador.
+kubectl delete gatewayclass -l 'app.kubernetes.io/managed-by!=Helm' --field-selector metadata.name=traefik 2>/dev/null || true
+kubectl get crd -l 'app.kubernetes.io/managed-by!=Helm' -o name | { grep gateway.networking.k8s.io || true; } | xargs -r kubectl delete
 echo "Esperando a Traefik..."
 timeout 600 sh -c 'until kubectl get deployment traefik -n kube-system >/dev/null 2>&1; do sleep 2; done' || {
   echo "Traefik no se instaló. Revise: kubectl logs -n kube-system job/helm-install-traefik-crd" >&2
