@@ -15,6 +15,7 @@ done < <(expandir_servicios "$objetivo")
 
 if [[ "$detener_motor" == "--motor" ]]; then
   echo "Deteniendo K3s y sincronizando el USB..."
-  sudo systemctl stop k3s
+  # Detener solo el servicio deja los contenedores escribiendo en el USB.
+  sudo /usr/local/bin/k3s-killall.sh >/dev/null 2>&1 || true
   sync
 fi

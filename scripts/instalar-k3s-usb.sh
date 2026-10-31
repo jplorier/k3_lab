@@ -28,7 +28,10 @@ mkdir -p "$DATOS/k3s" "$DATOS/pv" /var/lib/rancher/k3s /etc/rancher/k3s /etc/doc
 grep -q " /var/lib/rancher/k3s " /etc/fstab || echo "$DATOS/k3s /var/lib/rancher/k3s none bind,x-systemd.requires-mounts-for=$DATOS 0 0" >> /etc/fstab
 systemctl daemon-reload
 if ! mountpoint -q /var/lib/rancher/k3s; then
-  [[ -x /usr/local/bin/k3s-killall.sh ]] && /usr/local/bin/k3s-killall.sh
+  # Una instalación anterior tiene sus contenedores bajo el data-dir del USB.
+  if [[ -x /usr/local/bin/k3s-killall.sh ]]; then
+    K3S_DATA_DIR="$DATOS/k3s" /usr/local/bin/k3s-killall.sh || true
+  fi
   mount /var/lib/rancher/k3s
 fi
 

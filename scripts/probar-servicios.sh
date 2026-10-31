@@ -21,7 +21,7 @@ probar_tcp() {
 }
 
 probar_http registro http://localhost:30500/v2/
-probar_http aplicacion http://localhost:30088/
+probar_http aplicacion http://localhost/
 probar_http gitea http://localhost:30300/
 probar_http panel http://localhost:30301/
 probar_tcp sftp 30022
