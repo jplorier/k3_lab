@@ -124,7 +124,7 @@ class DocMoodle:
         self.w(f'<div style="border:1px dashed {AMBAR};background:{tint(AMBAR)};border-radius:4px;'
                f'padding:8px 12px;margin:8px 0;{FUENTE}font-size:14.5px;line-height:1.55;color:{TXT};">'
                f'<span style="display:inline-block;background:{AMBAR};color:#FFFFFF;font-weight:700;'
-               f'font-size:12px;padding:1px 7px;border-radius:3px;margin-right:6px;">PRÁCTICA {esc(idn)}</span>{texto}</div>')
+               f'font-size:12px;padding:1px 7px;border-radius:3px;margin-right:6px;">PRÁCTICA {esc(idn.replace("TAREA ", ""))}</span>{texto}</div>')
 
     def informe(self, texto):
         self.w(f'<div style="border-left:4px solid {PURP};background:{tint(PURP)};padding:8px 12px;'
@@ -244,7 +244,7 @@ df -h /srv/k3s-persistente""", "AMPLIACIÓN CON OTRO PENDRIVE")
     d.lista([
         b("Desgaste y latencia de memoria flash:") + " montamos la partición de datos con las opciones " + c("noatime,commit=60") + " en " + c("/etc/fstab") + " para evitar una escritura en el inodo por cada lectura de archivo y agrupar confirmaciones del journal de " + c("ext4") + ".",
         b("Desactivación de Swap y ZRAM:") + " Fedora Workstation crea por defecto un dispositivo de intercambio comprimido en RAM (" + c("zram0") + "). El " + c("kubelet") + " de Kubernetes exige que el intercambio esté desactivado para garantizar un comportamiento determinista de los límites de memoria (" + c("cgroups") + ").",
-        b("Persistencia unificada en ") + c("/srv/k3s-persistente") + ":" + " configuramos K3s mediante " + c("/etc/rancher/k3s/config.yaml") + " con " + c("data-dir: /srv/k3s-persistente/k3s") + " y " + c("default-local-storage-path: /srv/k3s-persistente/pv") + ". Así, aunque cambies de computadora, llevás todo el clúster y sus volúmenes en el bolsillo."
+        b("Persistencia unificada en ") + c("/srv/k3s-persistente") + ":" + " el instalador monta " + c("/srv/k3s-persistente/k3s") + " sobre " + c("/var/lib/rancher/k3s") + ", la ruta estándar de K3s, y configura en " + c("/etc/rancher/k3s/config.yaml") + " la opción " + c("default-local-storage-path: /srv/k3s-persistente/pv") + ". Así, aunque cambies de computadora, llevás todo el clúster y sus volúmenes en el bolsillo."
     ])
 
     d.h3("1.1. Clonar el repositorio y ejecutar el instalador automatizado")
@@ -319,8 +319,8 @@ kubectl rollout status deployment/mi-app -n lab-so
 kubectl get pods -n lab-so -l app=mi-app -o wide
 
 # Comprobar qué Pod responde en cada petición (balanceo de carga del Service)
-curl -s http://localhost/ | grep -E "Versi|Pod que|IP interna"
-curl -s http://localhost/ | grep -E "Versi|Pod que|IP interna""", "DESPLIEGUE DE LA VERSIÓN v1")
+curl -s http://localhost/ | grep -E 'Versi|Pod que|IP interna'
+curl -s http://localhost/ | grep -E 'Versi|Pod que|IP interna'""", "DESPLIEGUE DE LA VERSIÓN v1")
 
     d.p("También contás con el script " + c("./scripts/construir-y-publicar.sh") + " que automatiza todo el ciclo. Modificá algún texto en " + c("app-ejemplo/sitio/index.html") + " y publicá la versión " + c("v2") + ":")
     d.code("""# Construir, etiquetar, hacer push de v2 y actualizar el Deployment sin caída del servicio
@@ -329,7 +329,7 @@ curl -s http://localhost/ | grep -E "Versi|Pod que|IP interna""", "DESPLIEGUE DE
 # Verificar en el registro que ahora conviven los tags v1 y v2
 curl -s http://localhost:30500/v2/utec/mi-app/tags/list""", "ACTUALIZACIÓN A LA VERSIÓN v2")
 
-    d.tarea("TAREA 2.1", "Modificá " + c("app-ejemplo/sitio/index.html") + " agregando los nombres de los integrantes del grupo, construí y publicá la etiqueta " + c("localhost:30500/utec/mi-app:v2") + " y actualizá el Deployment en K3s.")
+    d.tarea("TAREA 2.1", "Modificá " + c("app-ejemplo/sitio/index.html") + " agregando un texto propio, construí y publicá la etiqueta " + c("localhost:30500/utec/mi-app:v2") + " y actualizá el Deployment en K3s.")
     d.informe("Observá la salida de " + c("docker push") + ", la respuesta JSON de " + c("http://localhost:30500/v2/utec/mi-app/tags/list") + " y recargá " + c("http://localhost/") + " para identificar los Pod que responden.")
 
     d.h3("2.4. Exponer servicios HTTP con Traefik, Ingress y Gateway API", VERDE)
@@ -342,7 +342,7 @@ kubectl get gateway,httproute -n lab-so
 kubectl describe httproute mi-app -n lab-so
 
 # La ruta / llega al Service ClusterIP mi-app sin abrir un NodePort propio
-curl -s http://localhost/ | grep -E "Versi|Pod que|IP interna""" , "TRAEFIK Y GATEWAY API")
+curl -s http://localhost/ | grep -E 'Versi|Pod que|IP interna'""", "TRAEFIK Y GATEWAY API")
     d.nota("Ingress clásico y Gateway API", "Traefik también procesa recursos " + c("Ingress") + ". En esta guía se usa Gateway API porque separa claramente la clase de controlador, el punto de entrada (Gateway) y el enrutamiento (HTTPRoute), y permite extender luego a TLS, TCPRoute o políticas de backend.", VERDE)
 
     # --- PARTE 3: COMPARTICION DE ARCHIVOS (SFTP, SAMBA 4, NFS) -----------------

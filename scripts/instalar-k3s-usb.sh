@@ -22,22 +22,42 @@ else
   mkdir -p "$DATOS"
 fi
 
-mkdir -p "$DATOS/k3s" "$DATOS/pv" /etc/rancher/k3s /etc/docker
+mkdir -p "$DATOS/k3s" "$DATOS/pv" /var/lib/rancher/k3s /etc/rancher/k3s /etc/docker
+
+# K3s no admite un data-dir propio con SELinux: se usa su ruta estándar, montada sobre el USB.
+grep -q " /var/lib/rancher/k3s " /etc/fstab || echo "$DATOS/k3s /var/lib/rancher/k3s none bind,x-systemd.requires-mounts-for=$DATOS 0 0" >> /etc/fstab
+systemctl daemon-reload
+if ! mountpoint -q /var/lib/rancher/k3s; then
+  [[ -x /usr/local/bin/k3s-killall.sh ]] && /usr/local/bin/k3s-killall.sh
+  mount /var/lib/rancher/k3s
+fi
+
 install -m 0644 "$RAIZ/config/k3s-config.yaml" /etc/rancher/k3s/config.yaml
 install -m 0644 "$RAIZ/config/registries.yaml" /etc/rancher/k3s/registries.yaml
 install -m 0644 "$RAIZ/config/daemon.json" /etc/docker/daemon.json
 install -D -m 0644 "$RAIZ/config/traefik-gateway.yaml" /var/lib/rancher/k3s/server/manifests/traefik-gateway.yaml
 
 dnf install -y curl ca-certificates docker git nfs-utils cifs-utils openssh-clients
+
+if systemctl is-active --quiet firewalld; then
+  firewall-cmd --permanent --add-port=6443/tcp
+  firewall-cmd --permanent --zone=trusted --add-source=10.42.0.0/16
+  firewall-cmd --permanent --zone=trusted --add-source=10.43.0.0/16
+  firewall-cmd --reload
+fi
+
 systemctl enable --now docker
 systemctl disable --now swap-create@zram0.service 2>/dev/null || true
 swapoff -a || true
 
 if ! command -v k3s >/dev/null; then
-  curl -sfL https://get.k3s.io | sh -
-else
-  systemctl enable --now k3s
+  curl -sfL https://get.k3s.io | INSTALL_K3S_SKIP_START=true sh -
 fi
+# Las etiquetas dependen de la política k3s-selinux, que instala el paso anterior.
+if selinuxenabled 2>/dev/null; then
+  restorecon -R /var/lib/rancher/k3s
+fi
+systemctl enable --now k3s
 
 until kubectl get nodes >/dev/null 2>&1; do sleep 2; done
 kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/standard-install.yaml
